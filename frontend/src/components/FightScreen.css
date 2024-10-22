@@ -1,0 +1,7 @@
+.FightScreen .monster-side img {
+  width: 50%;
+}
+.FightScreen .moves li button {
+  width: auto;
+  height: auto;
+}

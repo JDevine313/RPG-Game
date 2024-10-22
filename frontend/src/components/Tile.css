@@ -1,0 +1,8 @@
+.Tile {
+  border: 1px solid black;
+  width: calc(350px / 5);
+  height: calc(350px / 5);
+}
+.Tile img {
+  width: 25%;
+}

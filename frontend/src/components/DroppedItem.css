@@ -1,0 +1,7 @@
+.DroppedItem {
+  position: absolute;
+  background-color: white;
+  z-index: 2;
+  border: 1px solid black;
+  width: 30em;
+}
