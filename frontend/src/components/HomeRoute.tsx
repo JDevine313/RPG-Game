@@ -21,6 +21,7 @@ import sturdyOrbImg from "../assets/sturdy-orb.svg";
 import davieBonesImg from "../assets/skeleton-cropped.svg";
 import Item from "../models/Item";
 import DroppedItem from "./DroppedItem";
+import { motion } from "framer-motion";
 
 const HomeRoute = () => {
   const [tiles, setTiles] = useState<T[]>([]);
@@ -43,35 +44,35 @@ const HomeRoute = () => {
     let monsters: Monster[] = [
       {
         name: "slime",
-        level: level,
-        health: 3 * level,
+        level,
+        health: 5 + 2 * level, // Keep health manageable
         img: slimeImg,
-        maxHit: 1 + level,
+        maxHit: 1 + level, // Uncapped maxHit for slime
         exp: 1,
       },
       {
         name: "goblin",
-        level: level,
+        level,
+        health: 8 + 3 * level, // Slightly more health
         img: goblinImg,
-        health: 4 * level,
+        maxHit: 1 + 2 * level, // Uncapped maxHit for goblin
         exp: 2,
-        maxHit: 3 + level,
       },
       {
         name: "boar",
-        level: level,
-        health: 5 * level,
+        level,
+        health: 12 + 4 * level, // Higher health for boar
         img: boarImg,
-        exp: 2,
-        maxHit: 2 + level,
+        maxHit: 2 + 3 * level, // Uncapped maxHit for boar
+        exp: 3,
       },
       {
         name: "werewolf",
-        level: level,
-        health: 12 * level,
+        level,
+        health: 20 + 5 * level, // Significant health for werewolf
         img: werewolfImg,
-        exp: 5,
-        maxHit: 4 + level,
+        maxHit: 3 + 4 * level, // Uncapped maxHit for werewolf
+        exp: 4,
       },
     ];
 
@@ -213,7 +214,7 @@ const HomeRoute = () => {
 
   const checkIsDead = () => {
     if (monster && player) {
-      if (monster.health <= 0) {
+      if (monster.health === 0) {
         setMonster(null);
         setPlayer((prev: any) => {
           let copy = { ...prev };
@@ -225,10 +226,10 @@ const HomeRoute = () => {
           );
           if (copy.level > prev.level) {
             // level up
-            copy.health = 15 * copy.level;
-            copy.mana = 7 * copy.level;
-            copy.attack = Math.ceil(copy.level / 5);
-            copy.magic = Math.ceil(copy.level / 5);
+            copy.health = 30 + copy.level * 10;
+            copy.mana = 5 * copy.level;
+            copy.attack = 8 + copy.level * 2;
+            copy.magic = 8 + copy.level * 2;
           }
           return copy;
         });
@@ -288,12 +289,7 @@ const HomeRoute = () => {
         let copy = { ...prev };
         let itemBuffs = player.items.reduce((ac, cv) => ac + cv.attack, 0);
 
-        let num =
-          Math.floor(Math.random() * (4 + player.attack)) +
-          player.attack +
-          itemBuffs +
-          player.level;
-
+        let num = player.attack;
         copy.health -= num;
         if (copy.health < 0) {
           copy.health = 0;
@@ -307,7 +303,7 @@ const HomeRoute = () => {
     if (player && monster) {
       setPlayer((prev: any) => {
         let copy = { ...prev };
-        let num = Math.floor(Math.random() * monster.maxHit) + monster.level;
+        let num = monster.maxHit;
         copy.health -= num;
         if (copy.health < 0) {
           copy.health = 0;
@@ -318,11 +314,11 @@ const HomeRoute = () => {
   };
   // Spells
   const smallHealSpell = () => {
-    if (player && player.mana >= 4 + player.level) {
+    if (player && player.mana >= 8 + player.level) {
       setPlayer((prev: any) => {
         let copy = { ...prev };
-        let num =
-          Math.floor(Math.random() * (8 + player.level * 2)) + player.level * 2;
+        let itemBuffs = player.items.reduce((ac, cv) => ac + cv.magic, 0);
+        let num = player.magic + itemBuffs;
         copy.health += num;
         copy.mana -= 4 + player.level;
         return copy;
@@ -330,14 +326,13 @@ const HomeRoute = () => {
     }
   };
   const largeHealSpell = () => {
-    if (player && player.mana >= 8 + player.level) {
+    if (player && player.mana > 0) {
       setPlayer((prev: any) => {
         let copy = { ...prev };
-        let num =
-          Math.floor(Math.random() * (20 + player.level * 3)) +
-          player.level * 3;
+        let itemBuffs = player.items.reduce((ac, cv) => ac + cv.magic, 0);
+        let num = player.magic + player.mana + itemBuffs;
         copy.health += num;
-        copy.mana -= 8 + player.level;
+        copy.mana = 0;
         return copy;
       });
     }
@@ -354,19 +349,11 @@ const HomeRoute = () => {
         setMonster((prev: any) => {
           let copy = { ...prev };
           let itemBuffs = player.items.reduce((ac, cv) => ac + cv.attack, 0);
-          let slash1 =
-            Math.floor(Math.random() * 3) +
-            player.attack +
-            itemBuffs +
-            player.level;
-          let slash2 =
-            Math.floor(Math.random() * 3) +
-            player.attack +
-            itemBuffs +
-            player.level;
-
-          copy.health -= slash1;
-          copy.health -= slash2;
+          let num = player.attack + Math.ceil(player.attack / 2) + itemBuffs;
+          copy.health -= num;
+          if (copy.health < 0) {
+            copy.health = 0;
+          }
           return copy;
         });
       }
@@ -378,9 +365,9 @@ const HomeRoute = () => {
         {
           name: playerName,
           level: 1,
-          health: 10,
+          health: 30,
           mana: 5,
-          attack: 1,
+          attack: 8,
           magic: 1,
           exp: 0,
           skills: [],
@@ -410,17 +397,37 @@ const HomeRoute = () => {
         <DroppedItem item={droppedItem} takeDroppedItem={takeDroppedItem} />
       )}
       {gameOver && (
-        <div className="game-over">
+        <motion.div
+          className="game-over"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+        >
           <h2>Game Over</h2>
           <button onClick={() => handleRestart()}>RESTART</button>
           <button onClick={() => window.location.reload()}>
             LOAD FROM LAST SAVE
           </button>
-        </div>
+        </motion.div>
       )}
       {/* game board */}
       {player && !monster && (
-        <>
+        <motion.div
+          id="game-level"
+          initial={{
+            scale: 2, // Start small
+            opacity: 0, // Fully transparent
+          }}
+          animate={{
+            scale: 1, // Scale to full size when open
+            opacity: 1, // Fade in when open
+          }}
+          exit={{
+            scale: 2, // Scale down when exiting
+            opacity: 0, // Fade out when exiting
+          }}
+          transition={{ duration: 1 }}
+        >
           <h1>Dungeon Level: {player.level - 1}</h1>
           <ul id="game-board">
             {tiles.map((tile, i) => (
@@ -461,7 +468,7 @@ const HomeRoute = () => {
               <i className="fa-solid fa-right-long"></i>
             </button>
           </div>
-        </>
+        </motion.div>
       )}
       {monster && player && (
         <FightScreen

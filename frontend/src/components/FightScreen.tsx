@@ -2,6 +2,7 @@ import "./FightScreen.css";
 import { Monster as M } from "../models/Monster";
 import { Player as P } from "../models/Player";
 import { useState } from "react";
+import { motion, useAnimate } from "framer-motion";
 
 interface Props {
   monster: M;
@@ -25,17 +26,42 @@ const FightScreen = ({
   const [openSpells, setOpenSpells] = useState<boolean>(false);
   const [openSkills, setOpenSkills] = useState<boolean>(false);
   const [openItems, setOpenItems] = useState<boolean>(false);
+  const [openStats, setOpenStats] = useState<boolean>(false);
+  const [scope, animate] = useAnimate();
   const handleTurn = (action: Function) => {
     if (monster.health > 0) {
       action();
+      animate(
+        "img",
+        { x: [0, -10, 10, -10, 10, 0] },
+        {
+          duration: 1,
+          stiffness: 10,
+        }
+      );
       monsterBasicAttack();
     }
     setOpenSkills(false);
     setOpenSpells(false);
   };
   return (
-    <div className="FightScreen">
-      <div className="monster-side">
+    <motion.div
+      className="FightScreen"
+      initial={{
+        scale: 0.1, // Start small
+        opacity: 0, // Fully transparent
+      }}
+      animate={{
+        scale: 1, // Scale to full size when open
+        opacity: 1, // Fade in when open
+      }}
+      exit={{
+        scale: 0.1, // Scale down when exiting
+        opacity: 0, // Fade out when exiting
+      }}
+      transition={{ duration: 1 }}
+    >
+      <div className="monster-side" ref={scope}>
         <p>{monster.name}</p>
         <p>Health: {monster.health}HP</p>
         <img src={monster.img} alt="tutorial monster" />
@@ -63,6 +89,7 @@ const FightScreen = ({
                           }
                         })
                       }
+                      title="Two quick slashes. First: 50% attack, Second: 100% attack"
                     >
                       Double-Slash: {1 + player.level}MP
                     </button>
@@ -85,6 +112,7 @@ const FightScreen = ({
                           }
                         })
                       }
+                      title="Quick heal scaling off your players magic."
                     >
                       Small Heal: {4 + player.level}MP
                     </button>
@@ -97,8 +125,9 @@ const FightScreen = ({
                             }
                           })
                         }
+                        title="Large Heal using every MP point converting it to HP at 1:1"
                       >
-                        Large Heal: {9 + player.level}MP
+                        Large Heal: {player.mana}MP={player.mana}HP
                       </button>
                     )}
                   </li>
@@ -121,9 +150,28 @@ const FightScreen = ({
               </ul>
             )}
           </li>
+          <li>
+            <button onClick={() => setOpenStats((prev) => !prev)}>
+              Player Stats
+            </button>
+            {openStats && (
+              <ul>
+                <li>
+                  <p>Level: {player.level}</p>
+                  <p>Health Points: {player.health}</p>
+                  <p>Mana Points: {player.mana}</p>
+                  <p>Attack: {player.attack}</p>
+                  <p>Magic: {player.magic}</p>
+                  <p>
+                    Experience: {player.exp}/{player.level * 10}
+                  </p>
+                </li>
+              </ul>
+            )}
+          </li>
         </ul>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
